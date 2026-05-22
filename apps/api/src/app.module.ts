@@ -5,7 +5,6 @@ import {
   NestModule,
 } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from '@concurrency/logger';
 import { PrismaModule } from '@concurrency/prisma';
@@ -40,8 +39,6 @@ import { PrismaExceptionFilter } from './common/filter/prisma-exception.filter';
   ],
   controllers: [AppController],
   providers: [
-    AppService,
-
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_FILTER, useClass: PrismaExceptionFilter },
