@@ -1,0 +1,22 @@
+{
+  "name": "@concurrency/shared",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@concurrency/eslint-config": "*",
+    "@concurrency/tsconfig": "*",
+    "eslint": "^8.0.0",
+    "typescript": "^5.1.3"
+  }
+}
