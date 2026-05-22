@@ -4,7 +4,6 @@ import {
   Module,
   NestModule,
 } from '@nestjs/common';
-import { AppController } from './app.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from '@concurrency/logger';
 import { PrismaModule } from '@concurrency/database';
@@ -16,6 +15,7 @@ import { HttpExceptionFilter } from './common/filter/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptor/logging.interceptor';
 import { TransformInterceptor } from './common/interceptor/transform.interceptor';
 import { PrismaExceptionFilter } from './common/filter/prisma-exception.filter';
+import { Case1Module } from './modules/case1/case1.module';
 
 @Module({
   imports: [
@@ -36,8 +36,8 @@ import { PrismaExceptionFilter } from './common/filter/prisma-exception.filter';
         datasourceUrl: config.get('DATABASE_URL'),
       }),
     }),
+    Case1Module,
   ],
-  controllers: [AppController],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
