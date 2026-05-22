@@ -9,7 +9,7 @@ import {
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import type { Request, Response } from 'express';
 import { buildErrorEnvelope } from '../response/envelope';
-import { Prisma } from '@concurrency/prisma';
+import { Prisma } from '@concurrency/database';
 
 interface PrismaErrorMapping {
   status: number;

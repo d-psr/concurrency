@@ -7,7 +7,7 @@ import {
 import { AppController } from './app.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from '@concurrency/logger';
-import { PrismaModule } from '@concurrency/prisma';
+import { PrismaModule } from '@concurrency/database';
 import { NodeEnv, validateEnv, type Env } from './common/config/env.validation';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { APP_FILTER, APP_INTERCEPTOR, Reflector } from '@nestjs/core';

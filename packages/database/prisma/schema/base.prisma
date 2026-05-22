@@ -1,0 +1,10 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../../src/generated/client"
+  runtime      = "nodejs"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "mysql"
+}
