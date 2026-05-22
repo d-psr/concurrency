@@ -1,9 +1,13 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from '@concurrency/logger';
 import { NodeEnv, validateEnv, type Env } from './common/config/env.validation';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from './common/filter/all-exceptions.filter';
+import { HttpExceptionFilter } from './common/filter/http-exception.filter';
 
 @Module({
   imports: [
@@ -20,6 +24,14 @@ import { NodeEnv, validateEnv, type Env } from './common/config/env.validation';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_FILTER, useClass: HttpExceptionFilter },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}
