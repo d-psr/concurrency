@@ -11,7 +11,7 @@ export const envSchema = z.object({
   DATABASE_URL: z
     .string()
     .min(1, 'DATABASE_URL must not be empty.')
-    .refine((v) => v.startsWith('mysql://') || v.startsWith('mysqls://'), {
+    .refine((v) => v.startsWith('mysql://'), {
       message: 'DATABASE_URL must start with mysql:// or mysqls://.',
     }),
 });

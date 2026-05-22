@@ -1,0 +1,44 @@
+{
+  "name": "@concurrency/prisma",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "prisma"
+  ],
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:reset": "prisma migrate reset",
+    "studio": "prisma studio",
+    "build": "prisma generate && tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "clean": "rm -rf dist src/generated"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "mariadb": "^3.3.2"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@concurrency/eslint-config": "*",
+    "@concurrency/tsconfig": "*",
+    "@nestjs/common": "^10.0.0",
+    "@types/node": "^20.3.1",
+    "dotenv": "^16.4.5",
+    "eslint": "^8.0.0",
+    "prisma": "^7.0.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1",
+    "typescript": "^5.1.3"
+  }
+}

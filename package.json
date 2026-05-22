@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "start": "turbo run start:prod",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""

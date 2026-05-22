@@ -1,15 +1,22 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from '@concurrency/logger';
+import { PrismaModule } from '@concurrency/prisma';
 import { NodeEnv, validateEnv, type Env } from './common/config/env.validation';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filter/all-exceptions.filter';
 import { HttpExceptionFilter } from './common/filter/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptor/logging.interceptor';
 import { TransformInterceptor } from './common/interceptor/transform.interceptor';
+import { PrismaExceptionFilter } from './common/filter/prisma-exception.filter';
 
 @Module({
   imports: [
@@ -24,6 +31,12 @@ import { TransformInterceptor } from './common/interceptor/transform.interceptor
         isProduction: config.get('NODE_ENV') === NodeEnv.Production,
       }),
     }),
+    PrismaModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => ({
+        datasourceUrl: config.get('DATABASE_URL'),
+      }),
+    }),
   ],
   controllers: [AppController],
   providers: [
@@ -31,9 +44,18 @@ import { TransformInterceptor } from './common/interceptor/transform.interceptor
 
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_FILTER, useClass: PrismaExceptionFilter },
 
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
+    {
+      provide: APP_INTERCEPTOR,
+      useFactory: (reflector: Reflector) =>
+        new ClassSerializerInterceptor(reflector, {
+          excludeExtraneousValues: false,
+        }),
+      inject: [Reflector],
+    },
   ],
 })
 export class AppModule implements NestModule {
