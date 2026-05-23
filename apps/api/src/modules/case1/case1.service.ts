@@ -6,7 +6,7 @@ import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 
 const BCRYPT_COST = 12;
-const BCRYPT_CONCURRENCY = 4;
+const BCRYPT_CONCURRENCY = 3;
 const TMP_FILE = path.resolve(__dirname, '../../../../../tmp/tmp.bin');
 
 @Injectable()
