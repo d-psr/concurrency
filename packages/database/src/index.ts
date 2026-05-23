@@ -6,3 +6,4 @@ export type {
   PrismaModuleAsyncOptions,
 } from './prisma.options';
 export { Prisma, PrismaClient } from './generated/client/client';
+export { PrismaMariaDb } from '@prisma/adapter-mariadb';

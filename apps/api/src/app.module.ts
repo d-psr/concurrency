@@ -18,6 +18,7 @@ import { PrismaExceptionFilter } from './common/filter/prisma-exception.filter';
 import { Case1Module } from './modules/case1/case1.module';
 import { Case2Module } from './modules/case2/case2.module';
 import { Case3Module } from './modules/case3/case3.module';
+import { Case4Module } from './modules/case4/case4.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { Case3Module } from './modules/case3/case3.module';
     Case1Module,
     Case2Module,
     Case3Module,
+    Case4Module,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
