@@ -7,6 +7,7 @@ import {
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from '@concurrency/logger';
 import { PrismaModule } from '@concurrency/database';
+import { RedisModule } from '@concurrency/redis';
 import { NodeEnv, validateEnv, type Env } from './common/config/env.validation';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { APP_FILTER, APP_INTERCEPTOR, Reflector } from '@nestjs/core';
@@ -19,6 +20,7 @@ import { Case1Module } from './modules/case1/case1.module';
 import { Case2Module } from './modules/case2/case2.module';
 import { Case3Module } from './modules/case3/case3.module';
 import { Case4Module } from './modules/case4/case4.module';
+import { Case5Module } from './modules/case5/case5.module';
 
 @Module({
   imports: [
@@ -39,10 +41,17 @@ import { Case4Module } from './modules/case4/case4.module';
         datasourceUrl: config.get('DATABASE_URL'),
       }),
     }),
+    RedisModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => ({
+        url: config.get('REDIS_URL'),
+      }),
+    }),
     Case1Module,
     Case2Module,
     Case3Module,
     Case4Module,
+    Case5Module,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

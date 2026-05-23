@@ -14,6 +14,12 @@ export const envSchema = z.object({
     .refine((v) => v.startsWith('mysql://'), {
       message: 'DATABASE_URL must start with mysql:// or mysqls://.',
     }),
+  REDIS_URL: z
+    .string()
+    .min(1, 'REDIS_URL must not be empty.')
+    .refine((v) => v.startsWith('redis://') || v.startsWith('rediss://'), {
+      message: 'REDIS_URL must start with redis:// or rediss://.',
+    }),
 });
 
 export type Env = z.infer<typeof envSchema>;
