@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-const DEFAULT_INPUT = 'k6/case2/result/summary-latest.json';
+const DEFAULT_INPUT = 'k6/case3/result/summary-latest.json';
 const inputPath = process.argv[2] ?? DEFAULT_INPUT;
 const INITIAL = Number(process.env.INITIAL || 1_000_000);
 const PHASE_SEC = Number(process.env.PHASE_SEC || 30);

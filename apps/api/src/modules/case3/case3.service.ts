@@ -16,7 +16,7 @@ type DecrementResult = {
 };
 
 @Injectable()
-export class Case2Service {
+export class Case3Service {
   constructor(private readonly prisma: PrismaService) {}
 
   async reset(initial: number) {

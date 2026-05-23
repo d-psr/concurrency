@@ -3,7 +3,7 @@ import { check } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 import { buildSummary } from '../../lib/build-summary.js';
 
-const CASE_SLUG = 'case2';
+const CASE_SLUG = 'case3';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 const PHASE_SEC = Number(__ENV.PHASE_SEC || 30);
@@ -130,7 +130,7 @@ export const options = {
 
 export function setup() {
   const res = http.post(
-    `${BASE_URL}/case2/reset`,
+    `${BASE_URL}/case3/reset`,
     JSON.stringify({ initial: INITIAL }),
     { headers: HEADERS },
   );
@@ -157,21 +157,21 @@ function postDecrement(route, variant) {
 }
 
 export function loadNaive() {
-  postDecrement('/case2/decrement-naive', 'naive');
+  postDecrement('/case3/decrement-naive', 'naive');
 }
 export function loadAtomic() {
-  postDecrement('/case2/decrement-atomic', 'atomic');
+  postDecrement('/case3/decrement-atomic', 'atomic');
 }
 export function loadPessimistic() {
-  postDecrement('/case2/decrement-pessimistic', 'pessimistic');
+  postDecrement('/case3/decrement-pessimistic', 'pessimistic');
 }
 export function loadOptimistic() {
-  postDecrement('/case2/decrement-optimistic', 'optimistic');
+  postDecrement('/case3/decrement-optimistic', 'optimistic');
 }
 
 function resetAndCapture(variant) {
   const res = http.post(
-    `${BASE_URL}/case2/reset`,
+    `${BASE_URL}/case3/reset`,
     JSON.stringify({ initial: INITIAL }),
     { headers: HEADERS, tags: { variant, op: 'reset' } },
   );
