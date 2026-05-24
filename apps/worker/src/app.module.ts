@@ -4,6 +4,7 @@ import { LoggerModule } from '@concurrency/logger';
 import { PrismaModule } from '@concurrency/database';
 import { RedisModule } from '@concurrency/redis';
 import { NodeEnv, validateEnv, type Env } from './common/config/env.validation';
+import { Case3bModule } from './modules/case3b/case3b.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { NodeEnv, validateEnv, type Env } from './common/config/env.validation';
         url: config.get('REDIS_URL'),
       }),
     }),
+    Case3bModule,
   ],
 })
 export class AppModule {}

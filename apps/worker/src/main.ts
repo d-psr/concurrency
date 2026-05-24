@@ -1,12 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { INestApplicationContext, Logger } from '@nestjs/common';
+import { INestMicroservice, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from '@concurrency/logger';
-import { Env } from './common/config/env.validation';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { CASE3B_QUEUE } from '@concurrency/shared';
+import { Env, validateEnv } from './common/config/env.validation';
 
 class Worker {
-  constructor(private readonly app: INestApplicationContext) {}
+  constructor(private readonly app: INestMicroservice) {}
 
   private get config(): ConfigService<Env, true> {
     return this.app.get<ConfigService<Env, true>>(ConfigService);
@@ -25,16 +27,29 @@ class Worker {
   async bootstrap() {
     const env = this.config.get('NODE_ENV');
 
-    await this.app.init();
+    await this.app.listen();
 
     return { env };
   }
 }
 
 async function main() {
-  const app = await NestFactory.createApplicationContext(AppModule, {
-    bufferLogs: true,
-  });
+  const env = validateEnv(process.env);
+
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    AppModule,
+    {
+      transport: Transport.RMQ,
+      options: {
+        urls: [env.RABBITMQ_URL],
+        queue: CASE3B_QUEUE,
+        queueOptions: { durable: true },
+        prefetchCount: 1,
+        noAck: false,
+      },
+      bufferLogs: true,
+    },
+  );
 
   const worker = new Worker(app);
   await worker.init();

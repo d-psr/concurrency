@@ -19,6 +19,12 @@ export const envSchema = z.object({
     .refine((v) => v.startsWith('redis://') || v.startsWith('rediss://'), {
       message: 'REDIS_URL must start with redis:// or rediss://.',
     }),
+  RABBITMQ_URL: z
+    .string()
+    .min(1, 'RABBITMQ_URL must not be empty.')
+    .refine((v) => v.startsWith('amqp://') || v.startsWith('amqps://'), {
+      message: 'RABBITMQ_URL must start with amqp:// or amqps://.',
+    }),
 });
 
 export type Env = z.infer<typeof envSchema>;
