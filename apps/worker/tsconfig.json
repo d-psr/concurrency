@@ -1,0 +1,7 @@
+{
+  "extends": "@concurrency/tsconfig/nestjs.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "./"
+  }
+}
