@@ -87,16 +87,16 @@ export class Case5Service {
     return fresh;
   }
 
-  getSingleflight(id: number): Promise<ProductResult> {
+  async getSingleflight(id: number): Promise<ProductResult> {
     const now = Date.now();
     const entry = this.singleCache.get(id);
     if (entry && entry.expiresAt > now) {
-      return Promise.resolve({ ...entry.value, source: 'cache' });
+      return { ...entry.value, source: 'cache' };
     }
 
     const existing = this.singleInFlight.get(id);
     if (existing) {
-      return existing.then((value) => ({ ...value, source: 'cache' }));
+      return { ...(await existing), source: 'cache' };
     }
 
     const promise = this.fetchFromBackend(id)
@@ -238,6 +238,11 @@ export class Case5Service {
     } finally {
       await this.redis.del(lockKey);
     }
+  }
+
+  async probe(): Promise<{ ok: true }> {
+    await this.prisma.$queryRaw(Prisma.sql`SELECT 1`);
+    return { ok: true };
   }
 
   private async fetchFromBackend(id: number): Promise<ProductResult> {

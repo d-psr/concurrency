@@ -10,6 +10,11 @@ export class Case5Controller {
     return this.case5Service.reset();
   }
 
+  @Get('probe')
+  probe() {
+    return this.case5Service.probe();
+  }
+
   @Get('product-naive/:id')
   productNaive(@Param('id', ParseIntPipe) id: number) {
     return this.case5Service.getNaive(id);
