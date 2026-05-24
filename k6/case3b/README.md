@@ -322,3 +322,98 @@ queue        ▏                                            5.8/s ← 워커 처
 3. **Redis 장애 시 손실** (redis 변형) — flush 안 된 변경분 휘발. 강 정합성 도메인에는 부적합.
 4. **DB → Redis 단방향 flush** — 누군가 case3 라우트로 DB를 직접 건드리면 flusher가 그 변경을 덮어씀. 동일 실험 세션에서 case3·case3b 라우트 혼용 금지.
 
+---
+
+## 7. 부록 — Worker prefetch 튜닝 실험
+
+워커의 `prefetchCount`를 1 → 10으로 올렸을 때 queue 변형이 어떻게 변하는지 측정.
+
+### 7.1 결과 비교
+
+| 메트릭         | prefetch=1 | prefetch=10 | 변화          |
+| ----------- | ---------- | ----------- | ----------- |
+| applied/s   | 5.8        | **39.2**    | **6.5배 ↑**  |
+| avg latency | 10,275ms   | **1,302ms** | **8배 단축**   |
+| p99 latency | 12,635ms   | 1,556ms     | 8배 단축       |
+| max latency | 12,671ms   | 1,606ms     | 8배 단축       |
+| lost        | 0          | **0**       | 유지 ✅        |
+| fail%       | 0%         | 0%          | 유지          |
+
+→ throughput·latency 모두 큰 개선, 데이터 안전성(lost=0)은 atomic `updateMany` 덕에 그대로 유지.
+
+### 7.2 해석 — "부하 위치가 application → DB로 이동했을 뿐"
+
+- 이론 최대(prefetch × 1/RTT): ~60/s, 실측 39/s → **DB X-lock 대기열로 효율 65%만 도달**
+- prefetch=1이 큐(application 레이어)에서 줄세웠다면, prefetch=10은 같은 row에 대한 DB X-lock 대기열로 줄세움
+- 결과적으로 **case3 atomic 변형 + RabbitMQ transport overhead와 동치**가 됨 → case3-B variant A의 원래 narrative("큐로 직렬화 우회")는 prefetch≥2부터 무효화
+
+> **원리**: 시스템에서 직렬화는 사라지지 않고 위치만 바뀐다. prefetch는 "큐 대기"를 "DB 락 대기"로 환산하는 다이얼.
+
+### 7.3 prefetch ↑가 가져오는 부작용
+
+| 영역          | prefetch=1 | prefetch=10                                                        |
+| ----------- | ---------- | ------------------------------------------------------------------ |
+| DB conn 동시  | 1개         | 10개 (Prisma pool default와 동일 — 한계선)                                 |
+| 같은 row X-lock 대기열 | 0          | 9개                                                                 |
+| 크래시 시 redelivery 폭 | 최대 1건      | 최대 10건 (멱등성 부재 시 **double-decrement 위험 10배**)                      |
+| 운영 안전성     | 직렬화 강제로 안전 | **멱등성 키 없으면 위험**                                                   |
+
+### 7.4 prefetch≥2 환경에서의 멱등성 보장 방법
+
+prefetch를 올리는 순간(또는 워커를 여러 대 띄우는 순간) **메시지 재전달 시 중복 처리를 막을 메커니즘이 반드시 필요**.
+
+#### 방법 1 — `requestId` + dedupe 테이블 (권장)
+
+```ts
+// 1. payload에 requestId 추가
+type Case3bDecrementPayload = { amount: number; requestId: string };
+
+// 2. API producer
+client.send(PATTERN, { amount, requestId: crypto.randomUUID() });
+
+// 3. 워커 service에 dedupe 테이블 schema
+// model ProcessedRequest { id String @id }
+
+async decrement(payload: Payload) {
+  // 같은 트랜잭션 안에서 dedupe 기록 + 실제 차감
+  return prisma.$transaction(async (tx) => {
+    try {
+      await tx.processedRequest.create({ data: { id: payload.requestId } });
+    } catch (e) {
+      if (e.code === 'P2002') {
+        // 이미 처리됨 — 이전 결과 반환 (별도 result 컬럼 둬도 됨)
+        return { applied: false, reason: 'duplicate' };
+      }
+      throw e;
+    }
+    const result = await tx.account.updateMany({
+      where: { id: ACCOUNT_ID, balance: { gte: payload.amount } },
+      data: { balance: { decrement: payload.amount } },
+    });
+    return { applied: result.count === 1 };
+  });
+}
+```
+
+- **핵심**: dedupe 기록 + 차감이 **같은 트랜잭션** 안에 있어야 함. 따로 두면 사이에 크래시 시 다시 race.
+- TTL/cleanup: `processedRequest` 테이블이 무한 증가하지 않게 주기적 삭제 (예: 7일 이전 row 삭제 cron)
+
+#### 방법 2 — DB 자연 멱등성 활용
+
+decrement amount를 절대값이 아니라 **요청별 고유 amount**로 만들기. 같은 요청 = 같은 amount → 두 번 시도해도 같은 결과 되도록 설계. 결제처럼 amount가 임의일 때만 가능, 우리 case3b (amount=1 고정)에는 부적합.
+
+#### 방법 3 — Outbox 패턴 (가장 안전, 복잡도 ↑)
+
+API가 DB에 "결제 명령(intent)"을 트랜잭션과 함께 outbox 테이블에 박고, 별도 publisher가 outbox → RabbitMQ로 발행. 워커는 outbox row의 PK를 dedupe 키로 사용. **DB 트랜잭션이 명령의 truth source**가 되므로 메시지 손실/중복 모두 outbox row state로 복구 가능.
+
+### 7.5 정리
+
+| prefetch | 사용 조건                          | 비고                                                |
+| -------- | ------------------------------ | ------------------------------------------------- |
+| **1**    | 멱등성 키 없음 + case3-B narrative 유지 | 안전하지만 throughput 6/s 한계                            |
+| **=DB pool 크기** | **방법 1 필수**                    | throughput 6.5배 향상. DB pool 100% 활용              |
+| **>DB pool** | 위 + Prisma pool 크기 조정          | conn timeout(P2024) 위험, 신중                        |
+| **워커 N개** | 위 + 분산 락(case7) 또는 dedupe 키 | crash blast radius × N, 동일 row X-lock 경합 × N |
+
+**실무 권장**: 멱등성 키 도입 + DB pool 크기 = prefetch. 그 이상은 측정 후 결정.
+
