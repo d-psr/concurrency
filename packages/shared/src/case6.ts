@@ -1,4 +1,4 @@
-export const CASE6_QUEUE_MAX = 1000;
+export const CASE6_QUEUE_MAX = 100;
 export const CASE6_CONSUMER_MS = 100;
 export const CASE6_PREFETCH = 1;
 export const CASE6_STATS_WINDOW = 1000;
@@ -27,9 +27,13 @@ export type Case6WorkResult = {
   finishedAt: number;
 };
 
+// status 의미:
+//   processed — consumer가 정상 처리
+//   dropped   — 정책(drop-oldest)에 의해 큐에서 밀려남
+//   aborted   — /case6/reset에 의해 펜딩 상태에서 강제 종료 (정책 측정에서 제외)
 export type Case6EnqueueResponse = {
   policy: Case6Policy;
-  status: 'processed' | 'dropped';
+  status: 'processed' | 'dropped' | 'aborted';
   jobId: string;
   enqueuedAt: number;
   startedAt: number | null;
@@ -45,6 +49,7 @@ export type Case6PolicyStats = {
   processed: number;
   dropped: number;
   rejected: number;
+  aborted: number;
   oldestAgeMs: number | null;
   avgWaitMs: number;
   p95WaitMs: number;

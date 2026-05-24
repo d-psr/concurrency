@@ -117,10 +117,13 @@ export class InMemoryQueueService implements OnModuleInit, OnModuleDestroy {
   reset(): void {
     for (const policy of Object.keys(this.queues) as InMemoryPolicy[]) {
       const q = this.queues[policy];
+      if (q.jobs.length > 0) {
+        this.stats.recordAborted(policy, q.jobs.length);
+      }
       for (const job of q.jobs) {
         job.resolve({
           policy,
-          status: 'dropped',
+          status: 'aborted',
           jobId: job.jobId,
           enqueuedAt: job.enqueuedAt,
           startedAt: null,

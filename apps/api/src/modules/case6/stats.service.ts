@@ -12,6 +12,7 @@ type Counters = {
   processed: number;
   dropped: number;
   rejected: number;
+  aborted: number;
   waitWindow: number[];
   waitSum: number;
   waitCount: number;
@@ -43,6 +44,10 @@ export class StatsService {
     this.counters[policy].rejected += 1;
   }
 
+  recordAborted(policy: Case6Policy, count: number): void {
+    this.counters[policy].aborted += count;
+  }
+
   reset(): void {
     for (const policy of CASE6_POLICIES) {
       this.counters[policy] = this.emptyCounter();
@@ -62,6 +67,7 @@ export class StatsService {
         processed: c.processed,
         dropped: c.dropped,
         rejected: c.rejected,
+        aborted: c.aborted,
         oldestAgeMs: oldestAges[policy],
         avgWaitMs: c.waitCount === 0 ? 0 : c.waitSum / c.waitCount,
         p95WaitMs: this.p95(c.waitWindow),
@@ -95,6 +101,7 @@ export class StatsService {
       processed: 0,
       dropped: 0,
       rejected: 0,
+      aborted: 0,
       waitWindow: [],
       waitSum: 0,
       waitCount: 0,
