@@ -21,6 +21,7 @@ import { Case2Module } from './modules/case2/case2.module';
 import { Case3Module } from './modules/case3/case3.module';
 import { Case4Module } from './modules/case4/case4.module';
 import { Case5Module } from './modules/case5/case5.module';
+import { Case3bModule } from './modules/case3b/case3b.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { Case5Module } from './modules/case5/case5.module';
     Case3Module,
     Case4Module,
     Case5Module,
+    Case3bModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
