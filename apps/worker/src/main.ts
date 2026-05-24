@@ -4,56 +4,51 @@ import { INestMicroservice, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from '@concurrency/logger';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { CASE3B_QUEUE } from '@concurrency/shared';
+import {
+  CASE3B_QUEUE,
+  CASE6_PREFETCH,
+  CASE6_RMQ_QUEUE,
+} from '@concurrency/shared';
 import { Env, validateEnv } from './common/config/env.validation';
 
-class Worker {
-  constructor(private readonly app: INestMicroservice) {}
-
-  private get config(): ConfigService<Env, true> {
-    return this.app.get<ConfigService<Env, true>>(ConfigService);
-  }
-
-  async init(): Promise<void> {
-    this.setupLogger();
-
-    this.app.enableShutdownHooks();
-  }
-
-  private setupLogger(): void {
-    this.app.useLogger(this.app.get(WINSTON_MODULE_NEST_PROVIDER));
-  }
-
-  async bootstrap() {
-    const env = this.config.get('NODE_ENV');
-
-    await this.app.listen();
-
-    return { env };
-  }
-}
-
-async function main() {
-  const env = validateEnv(process.env);
-
+async function createRmqApp(
+  env: Env,
+  queue: string,
+  prefetchCount: number,
+): Promise<INestMicroservice> {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
       transport: Transport.RMQ,
       options: {
         urls: [env.RABBITMQ_URL],
-        queue: CASE3B_QUEUE,
+        queue,
         queueOptions: { durable: true },
-        prefetchCount: 1,
+        prefetchCount,
         noAck: false,
       },
       bufferLogs: true,
     },
   );
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+  app.enableShutdownHooks();
+  await app.listen();
+  return app;
+}
 
-  const worker = new Worker(app);
-  await worker.init();
-  return worker.bootstrap();
+async function main() {
+  const env = validateEnv(process.env);
+
+  const case3bApp = await createRmqApp(env, CASE3B_QUEUE, 1);
+  const case6App = await createRmqApp(env, CASE6_RMQ_QUEUE, CASE6_PREFETCH);
+
+  const nodeEnv = case3bApp
+    .get<ConfigService<Env, true>>(ConfigService)
+    .get('NODE_ENV');
+
+  void case6App;
+
+  return { env: nodeEnv };
 }
 
 main()

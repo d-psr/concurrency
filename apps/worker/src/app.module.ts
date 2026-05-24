@@ -5,6 +5,7 @@ import { PrismaModule } from '@concurrency/database';
 import { RedisModule } from '@concurrency/redis';
 import { NodeEnv, validateEnv, type Env } from './common/config/env.validation';
 import { Case3bModule } from './modules/case3b/case3b.module';
+import { Case6Module } from './modules/case6/case6.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { Case3bModule } from './modules/case3b/case3b.module';
       }),
     }),
     Case3bModule,
+    Case6Module,
   ],
 })
 export class AppModule {}
