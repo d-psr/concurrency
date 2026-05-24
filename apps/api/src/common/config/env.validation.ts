@@ -26,6 +26,7 @@ export const envSchema = z.object({
     .refine((v) => v.startsWith('amqp://') || v.startsWith('amqps://'), {
       message: 'RABBITMQ_URL must start with amqp:// or amqps://.',
     }),
+  INSTANCE_ID: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
