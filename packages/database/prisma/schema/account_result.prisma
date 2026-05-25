@@ -1,0 +1,12 @@
+model AccountResult {
+  requestId      String   @id @map("request_id") @db.VarChar(128)
+  amount         Int
+  before         Int
+  after          Int
+  applied        Boolean
+  queueWaitMs    Int      @map("queue_wait_ms")
+  workerInstance String   @map("worker_instance") @db.VarChar(64)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("accounts_result")
+}
